@@ -1,0 +1,278 @@
+---
+title: "Karthik_Kasa_SDS315Homework4"
+author: "Karthikeya Kasa"
+date: "2025-02-18"
+output: pdf_document
+---
+
+### UTEID: kk38378
+Github Link:
+
+ [https://github.com/karthikeyakasa/SDS2025Homewok4](https://github.com/karthikeyakasa/SDS2025Homewok4)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+```
+
+## Problem 1) Iron Bank
+
+
+```{r}
+library(tidyverse)
+library(mosaic)
+
+
+sim_flags <- do(10000) * nflip(n= 2100, prob = 0.024)
+p_val <- sum(sim_flags >=70)/10000
+
+
+
+
+sim_flags_values <- unlist(sim_flags)
+
+ggplot(data.frame(sim_flags = sim_flags_values), aes(x = sim_flags)) +
+  geom_histogram(binwidth = 1, fill = 'skyblue', color = 'black', alpha = 0.7) +
+  geom_vline(xintercept = 70, color = 'red', linetype = 'dashed', size = 1) +
+  labs(title = 'Distribution of Simulated Flags', 
+       x = 'Number of Flags', 
+       y = 'Frequency') +
+  theme_minimal() +
+  theme(text = element_text(size = 14)) +
+  theme(legend.position = "none")
+
+print(paste0("P value: ", p_val))
+
+
+```
+
+The Null Hypothesis or Ho states that the rate of which Iron Bank employees' trades are flagged is the same as the baseline rate of 2.4% observed among all traders, which means that any deviations from this rate are due to random chance rather than systematic differences in trading behavior. The test statistic is the number of flagged trades in a given simulation, and in the real data the value is 70. To test this, I used Monte Carlo simulation with 10,000 trials, where I simulated 2,100 trades per trial and recored how many times 70 trades were flagged. The p-value ended up being 0.0038, meaning that if Iron Bank employees were being flagged at a normal rate, this extreme result would only happen 0.38% of the time. Since this a very small possibility, I reject the null hypothesis and conclude that Iron Bank's flagged trade rate is significantly higher than expected, making it reasonable for the SEC to investigate.  
+
+
+
+## Problem 2) Health Inspections
+
+
+```{r}
+nflip(n =50, p= 0.03)
+sim_violations <- do(10000)* nflip(n= 50, p = 0.03)
+p_val <- sum(sim_violations>=8)/10000
+
+
+sim_violations_values <- unlist(sim_violations)
+
+ggplot(data.frame(sim_violations = sim_violations_values), aes(x = sim_violations)) +
+  geom_histogram(binwidth = 1, fill = 'skyblue', color = 'black', alpha = 0.7) +
+  geom_vline(xintercept = 8, color = 'red', linetype = 'dashed', size = 1) +
+  labs(title = 'Distribution of Simulated Violations', 
+       x = 'Number of Violations', 
+       y = 'Frequency') +
+  theme_minimal() +
+  theme(text = element_text(size = 14)) +
+  theme(legend.position = "none")
+
+
+print(paste0("P-value:", p_val))
+
+```
+
+The null hypothesis is that the Gourmet Bites' restaurants receive health code violations at the same 3% rate as all other restaurants in the city, meaning that any increase in violations is just due to random chance. The test statistic is the number of violations in a given sample, and in the real data, this value is 8 out of 50 inspections. To test this, I used Monte Carlo simulation with 10000 trials, where I simulated 50 inspections per trial and counted how often at least 8 violations were observed. The p-value came out to be 0.0001 meaning that if Gourmet Bites truly had a violation of only 3%, we'd expect to see 8 or more violations in just 0.01% of cases. Since this probability is far below the common significance thresholds, I reject the null hypothesis and conclude that Gourmet Bites' violation rate is significantly higher than expected, providing strong justification for a further investigation by the Health Department
+
+## Problem 3) Evaluating Jury Selection for Bias
+
+```{r}
+n_trials <- 20
+jurors_per_trial <- 12
+total_jurors <- n_trials * jurors_per_trial
+observed_counts <- c(85, 56, 59, 27, 13)
+expected_proportions <- c(0.30, 0.25, 0.20, 0.15, 0.10)
+
+expected_counts <- expected_proportions * total_jurors
+
+num_simulations <- 100000
+
+simulated_counts <- matrix(0, nrow = num_simulations, ncol = 5)
+
+# Simulate for each group
+for (i in 1:num_simulations) {
+  simulated_counts[i, 1] <- nflip(n = total_jurors, prob = expected_proportions[1])
+  simulated_counts[i, 2] <- nflip(n = total_jurors, prob = expected_proportions[2])
+  simulated_counts[i, 3] <- nflip(n = total_jurors, prob = expected_proportions[3])
+  simulated_counts[i, 4] <- nflip(n = total_jurors, prob = expected_proportions[4])
+  simulated_counts[i, 5] <- nflip(n = total_jurors, prob = expected_proportions[5])
+}
+
+chisq_observed <- sum((observed_counts - expected_counts)^2 / expected_counts)
+
+simulated_chisq <- rep(0, num_simulations)
+
+for (i in 1:num_simulations) {
+  simulated_chisq[i] <- sum((simulated_counts[i, ] - expected_counts)^2 / expected_counts)
+}
+
+library(ggplot2)
+ggplot(data.frame(simulated_chisq), aes(x = simulated_chisq)) + 
+  geom_histogram(binwidth = 0.1, color = "black", fill = "skyblue") + 
+  geom_vline(xintercept = chisq_observed, color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Distribution of Chi-Squared Statistics (Under Null Hypothesis)", 
+       x = "Chi-Squared Statistic", 
+       y = "Frequency") +
+  theme_minimal()
+
+p_val <- sum(simulated_chisq >= chisq_observed) / num_simulations
+print(paste0("P-value:", p_val))
+
+
+```
+The null hypothesis here is that the jurors picked by this judge have the same racial/ethnic makeup as the county’s eligible jury population, meaning any differences are just by chance. To test this, I used the chi-squared statistic, which compares the actual juror counts (85, 56, 59, 27, and 13) to the expected counts based on the county’s population. I ran a Monte Carlo simulation with 100,000 trials, randomly picking jurors based on those proportions and calculating the chi-squared statistic each time. The p-value came out to 0.00869, which means that if jurors were picked based on the county’s proportions, we’d only expect to see this big of a difference about 0.87% of the time. Since the p-value is much lower than the usual cutoff, I can reject the null hypothesis. This suggests that the jury selection process under this judge might be different from what we'd expect based on the county’s demographics, which could mean there's some bias. However, other factors like eligibility or juror excusals could be involved, so we’d need more data to really understand what's going on. The histogram of chi-squared values from the simulations shows that the observed value is a big outlier, which backs up this conclusion.
+
+
+
+## Problem 4) LLM Watermarking
+
+```{r}
+sentences <- readLines("brown_sentences.txt")
+preprocess_sentence <- function(sentence) {
+  sentence <- gsub("[^A-Za-z]", "", sentence)  # Remove non-alphabetic characters
+  sentence <- toupper(sentence)  # Convert to uppercase
+  return(sentence)
+}
+
+clean_sentences <- sapply(sentences, preprocess_sentence)
+
+get_letter_frequencies <- function(sentence) {
+  letter_counts <- table(strsplit(sentence, ""))
+  
+  all_letters <- LETTERS
+  letter_counts_full <- setNames(rep(0, length(all_letters)), all_letters)
+  
+  letter_counts_full[names(letter_counts)] <- letter_counts
+  
+  return(letter_counts_full)
+}
+
+
+
+```
+
+
+
+
+
+```{r}
+expected_freq_df <- read.csv("letter_frequencies.csv")
+expected_freq <- setNames(expected_freq_df$Probability, expected_freq_df$Letter)
+calculate_expected_counts <- function(sentence, expected_freq) {
+  sentence <- preprocess_sentence(sentence) 
+  
+  total_letters <- nchar(sentence)  
+  
+  if (total_letters == 0) {
+    return(rep(0, length(expected_freq)))  
+  }
+  
+  expected_counts <- expected_freq * total_letters  
+  
+  return(expected_counts)
+}
+
+
+
+```
+
+
+
+```{r}
+compute_chi_squared <- function(observed_counts, expected_counts) {
+  valid_letters <- names(observed_counts)[observed_counts > 0]
+  
+  chi_squared_value <- sum((observed_counts[valid_letters] - expected_counts[valid_letters])^2 / expected_counts[valid_letters])
+  
+  return(chi_squared_value)
+}
+
+
+
+```
+
+
+
+```{r}
+chi_squared_stats <- numeric(length(clean_sentences))
+
+for (i in 1:length(clean_sentences)) {
+  sentence <- clean_sentences[i]
+  observed_counts <- get_letter_frequencies(sentence)
+  expected_counts <- calculate_expected_counts(sentence, expected_freq)
+  chi_squared_stats[i] <- compute_chi_squared(observed_counts, expected_counts)
+}
+
+ggplot(data.frame(chi_squared_stats), aes(x = chi_squared_stats)) +
+  geom_histogram(binwidth = 2, color = "black", fill = "skyblue") +
+  labs(
+    title = "Distribution of Chi-Squared Statistics (Brown Corpus)",
+    x = "Chi-Squared Statistic",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+
+```
+
+
+```{r}
+# Sentences to test
+sentences_to_test <- c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+clean_test_sentences <- sapply(sentences_to_test, preprocess_sentence)
+
+chi_squared_test_stats <- numeric(length(clean_test_sentences))
+
+for (i in 1:length(clean_test_sentences)) {
+  sentence <- clean_test_sentences[i]
+  observed_counts <- get_letter_frequencies(sentence)
+  expected_counts <- calculate_expected_counts(sentence, expected_freq)
+  
+  chi_squared_test_stats[i] <- compute_chi_squared(observed_counts, expected_counts)
+}
+
+p_values_test <- sapply(chi_squared_test_stats, function(chi_squared_value) {
+  # Calculate the p-value: the proportion of chi-squared statistics from the reference distribution that are >= the test statistic
+  p_value <- sum(chi_squared_stats >= chi_squared_value) / length(chi_squared_stats)
+  return(p_value)
+})
+
+p_values_test_table <- data.frame(
+  Sentence = sentences_to_test,  # Include the full sentence, not just the sentence number
+  P_Value = round(p_values_test, 3)  # Round p-values to 3 decimal places
+)
+
+library(kableExtra)
+kable(p_values_test_table, 
+      col.names = c("Sentence", "P-Value"),  # Custom column names
+      caption = "P-Values for Each Sentence Based on Chi-Squared Test",
+      digits = 3)
+
+
+
+```
+
+
+
+
+The sentence most likely to have been generated by AI is sentence number 6. The sentence is: 
+
+"Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland."
+
+
+It has the smallest p-value, which basically means its letter pattern is way different from what you'd usually see in normal English text. This could mean the letters were tweaked a little, like how AI-generated text sometimes has small changes in letter frequencies. The low p-value just shows that this sentence doesn’t really match the usual way English sentences look.
